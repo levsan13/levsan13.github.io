@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sergio Levy — levsan13</title>
-<meta name="description" content="Sergio Levy (levsan13) — physics, machine learning and self-hosted infrastructure. UFC, Brazil.">
+<meta name="description" content="Sergio Levy (levsan13) — Ph.D. candidate in condensed matter physics at UFC. Computational simulation, machine learning and electronics.">
 <link rel="icon" href="https://avatars.githubusercontent.com/u/51966897?s=64&v=4">
 <meta property="og:title" content="Sergio Levy — levsan13">
-<meta property="og:description" content="Physics, machine learning and self-hosted infrastructure. UFC, Brazil.">
+<meta property="og:description" content="Ph.D. candidate in condensed matter physics at UFC. Computational simulation, machine learning and electronics.">
 <meta property="og:image" content="https://avatars.githubusercontent.com/u/51966897?v=4">
 <meta property="og:type" content="profile">
 
@@ -156,6 +156,14 @@
   }
   .lede{margin:-6px 0 26px;color:#C7CBE2;max-width:58ch;font-size:clamp(16px,1.7vw,17.5px)}
 
+  .topics{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 30px;padding:0;list-style:none}
+  .topics li{
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.05em;color:var(--muted);
+    border:1px solid var(--line);border-radius:999px;padding:5px 13px;background:rgba(20,25,53,.5);
+  }
+  .topics li.hw{color:var(--amber);border-color:rgba(242,180,65,.42)}
+  #topics-label{margin-bottom:14px}
+
   /* ---------- repos ---------- */
   .repos{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
   .repo{
@@ -229,11 +237,13 @@
         <p data-i18n="about.p1"></p>
         <p data-i18n="about.p2"></p>
         <p data-i18n="about.p3"></p>
+        <p data-i18n="about.p4"></p>
       </div>
       <ul class="facts">
-        <li><span class="k" data-i18n="facts.affiliation"></span><span class="v">UFC</span></li>
+        <li><span class="k" data-i18n="facts.phd"></span><span class="v" data-i18n="facts.phdValue"></span></li>
+        <li><span class="k" data-i18n="facts.role"></span><span class="v">FCPC · Kunumi Lab UFC</span></li>
+        <li><span class="k" data-i18n="facts.technical"></span><span class="v" data-i18n="facts.technicalValue"></span></li>
         <li><span class="k" data-i18n="facts.location"></span><span class="v" data-i18n="facts.locationValue"></span></li>
-        <li><span class="k" data-i18n="facts.field"></span><span class="v" data-i18n="facts.fieldValue"></span></li>
         <li><span class="k">ORCID</span><span class="v"><a href="https://orcid.org/0009-0004-2541-7934">0009-0004-2541-7934</a></span></li>
         <li><span class="k" data-i18n="facts.languages"></span><span class="v">Português · English</span></li>
       </ul>
@@ -258,6 +268,8 @@
   <div class="section-inner">
     <p class="label" data-i18n="highlights.label"></p>
     <p class="lede" data-i18n="highlights.intro"></p>
+    <p class="label" id="topics-label" data-i18n="highlights.topics" hidden></p>
+    <ul class="topics" id="topic-strip"></ul>
     <div class="repos" id="star-grid"></div>
     <p class="status" id="star-status"></p>
   </div>
@@ -284,18 +296,21 @@
    ======================================================================= */
 const I18N = {
   en: {
-    "hero.eyebrow": "A wave packet spreading as it travels — where it started.",
+    "hero.eyebrow": "A wave packet spreading as it travels — the thing I've spent years simulating.",
     "hero.place": "Brazil",
-    "hero.tagline": "Physics graduate turned machine-learning researcher. I study how generative models behave, and I like running things on my own hardware.",
+    "hero.tagline": "Ph.D. candidate in condensed matter physics at UFC. I simulate wave packet dynamics in graphene, and I customize open-source language models for a living.",
     "about.label": "About",
-    "about.p1": "I'm Sergio Levy, based in Brazil and affiliated with the Universidade Federal do Ceará (UFC). My background is in physics: my graduation project simulated the propagation of quantum wave packets on curved geometry, written in C++.",
-    "about.p2": "That numerical work led me into machine learning. Today I research generative models — how they encode demographic bias, and what can be done at the prompt level to mitigate it without retraining.",
-    "about.p3": "Off the clock I self-host: local language models, a home NAS on ZFS, and the small pile of infrastructure that keeps them talking to each other.",
-    "facts.affiliation": "Affiliation",
+    "about.p1": "I'm a physicist with a solid academic background: a bachelor's and a master's degree in Physics from the Universidade Federal do Ceará (UFC), where I am currently a Ph.D. candidate in Condensed Matter Physics. I also hold a technical degree in Electrotechnics from IFCE, with an emphasis on industrial electronic systems.",
+    "about.p2": "My trajectory is marked by research and computational simulation — projects in C, C++ and Python for the study of wave packet dynamics in graphene — alongside work as a teaching intern across several physics laboratories at UFC.",
+    "about.p3": "Since September 2025 I have been at the Fundação Cearense de Pesquisa e Cultura (FCPC), on the Kunumi Lab UFC project, customizing open-source Large Language Models for process automation.",
+    "about.p4": "My core technical skills are artificial intelligence, machine learning, data analysis and advanced programming, complemented by extracurricular courses in Big Data, TensorFlow and Python applied to finance. The electronics side never left: microcontrollers and embedded firmware, instrumentation and data acquisition, signal conditioning and industrial control — the hardware end of the same problems I now model in software.",
+    "facts.phd": "Doctorate",
+    "facts.phdValue": "Condensed Matter Physics, UFC",
+    "facts.role": "Since 2025",
+    "facts.technical": "Technical degree",
+    "facts.technicalValue": "Electrotechnics, IFCE",
     "facts.location": "Location",
     "facts.locationValue": "Brazil",
-    "facts.field": "Field",
-    "facts.fieldValue": "Physics · ML",
     "facts.languages": "Languages",
     "papers.label": "Papers & citations",
     "papers.statWorks": "Indexed works",
@@ -309,6 +324,7 @@ const I18N = {
     "papers.citations": "citations",
     "highlights.label": "Highlights",
     "highlights.intro": "Projects I've starred on GitHub — the work I follow, use, or keep coming back to.",
+    "highlights.topics": "Recurring topics",
     "highlights.loading": "Loading starred projects…",
     "highlights.empty": "No starred projects yet.",
     "highlights.offline": "GitHub's API is busy right now.",
@@ -321,18 +337,21 @@ const I18N = {
     "footer.left": "Built with HTML, CSS and a bit of numerical physics."
   },
   pt: {
-    "hero.eyebrow": "Um pacote de onda que se espalha ao viajar — onde tudo começou.",
+    "hero.eyebrow": "Um pacote de onda que se espalha ao viajar — o que passei anos simulando.",
     "hero.place": "Brasil",
-    "hero.tagline": "Físico de formação, pesquisador em aprendizado de máquina. Estudo o comportamento de modelos generativos e gosto de rodar as coisas no meu próprio hardware.",
+    "hero.tagline": "Doutorando em física da matéria condensada na UFC. Simulo a dinâmica de pacotes de onda em grafeno e customizo modelos de linguagem de código aberto no trabalho.",
     "about.label": "Sobre",
-    "about.p1": "Sou Sergio Levy, moro no Brasil e sou vinculado à Universidade Federal do Ceará (UFC). Minha formação é em física: meu trabalho de graduação simulou a propagação de pacotes de onda quânticos em geometria curva, escrito em C++.",
-    "about.p2": "Esse trabalho numérico me levou ao aprendizado de máquina. Hoje pesquiso modelos generativos — como eles codificam viés demográfico e o que dá para fazer no nível do prompt para mitigá-lo sem retreinar nada.",
-    "about.p3": "Fora do expediente, self-hosting: modelos de linguagem locais, um NAS caseiro em ZFS e a pequena pilha de infraestrutura que mantém tudo conversando.",
-    "facts.affiliation": "Vínculo",
+    "about.p1": "Sou físico, com formação acadêmica sólida: bacharelado e mestrado em Física pela Universidade Federal do Ceará (UFC), onde hoje sou doutorando em Física da Matéria Condensada. Tenho também formação técnica em Eletrotécnica pelo IFCE, com ênfase em sistemas eletrônicos industriais.",
+    "about.p2": "Minha trajetória é marcada por pesquisa e simulação computacional — projetos em C, C++ e Python para o estudo da dinâmica de pacotes de onda em grafeno — ao lado da experiência como estagiário de docência em vários laboratórios de física da UFC.",
+    "about.p3": "Desde setembro de 2025 atuo na Fundação Cearense de Pesquisa e Cultura (FCPC), no projeto Kunumi Lab UFC, na customização de modelos de linguagem de código aberto para automação de processos.",
+    "about.p4": "Minhas competências técnicas centrais são inteligência artificial, aprendizado de máquina, análise de dados e programação avançada, complementadas por cursos extracurriculares em Big Data, TensorFlow e Python aplicado a finanças. A eletrônica nunca saiu de cena: microcontroladores e firmware embarcado, instrumentação e aquisição de dados, condicionamento de sinais e controle industrial — o lado de hardware dos mesmos problemas que hoje modelo em software.",
+    "facts.phd": "Doutorado",
+    "facts.phdValue": "Física da Matéria Condensada, UFC",
+    "facts.role": "Desde 2025",
+    "facts.technical": "Técnico",
+    "facts.technicalValue": "Eletrotécnica, IFCE",
     "facts.location": "Localização",
     "facts.locationValue": "Brasil",
-    "facts.field": "Área",
-    "facts.fieldValue": "Física · ML",
     "facts.languages": "Idiomas",
     "papers.label": "Artigos e citações",
     "papers.statWorks": "Trabalhos indexados",
@@ -346,6 +365,7 @@ const I18N = {
     "papers.citations": "citações",
     "highlights.label": "Destaques",
     "highlights.intro": "Projetos que marquei com estrela no GitHub — o que acompanho, uso ou volto a consultar.",
+    "highlights.topics": "Tópicos recorrentes",
     "highlights.loading": "Carregando projetos com estrela…",
     "highlights.empty": "Nenhum projeto com estrela ainda.",
     "highlights.offline": "A API do GitHub está ocupada agora.",
@@ -497,8 +517,38 @@ fetch("https://api.github.com/users/levsan13/repos?sort=pushed&per_page=100")
 const starGrid = document.getElementById("star-grid");
 const starStatus = document.getElementById("star-status");
 
+/* GitHub topics that count as the electronics thread — these get highlighted */
+const HW_TOPICS = ["arduino","esp32","esp8266","embedded","embedded-systems","firmware","pcb",
+  "kicad","electronics","iot","microcontroller","stm32","avr","fpga","verilog","vhdl","hardware",
+  "raspberry-pi","robotics","plc","automation","signal-processing","dsp","sensors","instrumentation",
+  "power-electronics","circuit","circuits","spice","analog","rtos","can-bus","modbus"];
+
+const topicStrip = document.getElementById("topic-strip");
+const topicsLabel = document.getElementById("topics-label");
+
+function renderTopics(list){
+  const counts = {};
+  list.forEach(function(r){
+    (r.topics || []).forEach(function(t){ counts[t] = (counts[t] || 0) + 1; });
+  });
+  const names = Object.keys(counts).sort(function(a,b){
+    const hw = (HW_TOPICS.indexOf(b) > -1) - (HW_TOPICS.indexOf(a) > -1);
+    return hw || (counts[b] - counts[a]) || a.localeCompare(b);
+  }).slice(0, 16);
+
+  topicStrip.innerHTML = "";
+  names.forEach(function(t){
+    const li = document.createElement("li");
+    if (HW_TOPICS.indexOf(t) > -1) li.className = "hw";
+    li.textContent = t;
+    topicStrip.appendChild(li);
+  });
+  topicsLabel.hidden = names.length === 0;
+}
+
 function renderStars(){
   renderRepoCards(starGrid, state.stars.list, true);
+  renderTopics(state.stars.list);
   const empty = state.stars.list.length === 0;
   statusLine(starStatus,
     state.stars.live ? (empty ? "highlights.empty" : null) : "highlights.offline",
