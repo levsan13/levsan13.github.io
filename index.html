@@ -270,14 +270,6 @@
     <p class="lede" data-i18n="highlights.intro"></p>
     <p class="label" id="topics-label" data-i18n="highlights.topics" hidden></p>
     <ul class="topics" id="topic-strip"></ul>
-    <div class="repos" id="star-grid"></div>
-    <p class="status" id="star-status"></p>
-  </div>
-</section>
-
-<section class="section" id="repos">
-  <div class="section-inner">
-    <p class="label" data-i18n="repos.label"></p>
     <div class="repos" id="repo-grid"></div>
     <p class="status" id="repo-status"></p>
   </div>
@@ -296,7 +288,7 @@
    ======================================================================= */
 const I18N = {
   en: {
-    "hero.eyebrow": "2D Materials and AI manipulation. ",
+    "hero.eyebrow": "2D Materials and AI manipulation.",
     "hero.place": "Brazil",
     "hero.tagline": "Ph.D. candidate in condensed matter physics at UFC. I simulate wave packet dynamics in graphene, and I customize open-source language models for a living.",
     "about.label": "About",
@@ -307,8 +299,8 @@ const I18N = {
     "facts.phd": "Doctorate",
     "facts.phdValue": "Condensed Matter Physics, UFC",
     "facts.role": "Since 2025",
-    "facts.technical": "Technical degree",
-    "facts.technicalValue": "Electrotechnics, IFCE",
+    "facts.technical": "Technical training",
+    "facts.technicalValue": "Electrotechnics, IFCE (ongoing)",
     "facts.location": "Location",
     "facts.locationValue": "Brazil",
     "facts.languages": "Languages",
@@ -323,15 +315,12 @@ const I18N = {
     "papers.citation": "citation",
     "papers.citations": "citations",
     "highlights.label": "Highlights",
-    "highlights.intro": "Projects I've starred on GitHub — the work I follow, use, or keep coming back to.",
+    "highlights.intro": "My repositories on GitHub, most starred first.",
     "highlights.topics": "Recurring topics",
-    "highlights.loading": "Loading starred projects…",
-    "highlights.empty": "No starred projects yet.",
+    "highlights.loading": "Loading repositories…",
+    "highlights.empty": "No public repositories yet.",
     "highlights.offline": "GitHub's API is busy right now.",
-    "highlights.starsLink": "See the starred list on GitHub",
-    "repos.label": "Repositories",
-    "repos.loading": "Loading repositories…",
-    "repos.offline": "Live list unavailable right now — showing the pinned repositories.",
+    "highlights.reposLink": "See every repository on GitHub",
     "repos.updated": "updated",
     "repos.noDescription": "No description.",
     "footer.left": "Built with HTML, CSS and a bit of numerical physics."
@@ -349,7 +338,7 @@ const I18N = {
     "facts.phdValue": "Física da Matéria Condensada, UFC",
     "facts.role": "Desde 2025",
     "facts.technical": "Técnico",
-    "facts.technicalValue": "Eletrotécnica, IFCE",
+    "facts.technicalValue": "Eletrotécnica, IFCE (em curso)",
     "facts.location": "Localização",
     "facts.locationValue": "Brasil",
     "facts.languages": "Idiomas",
@@ -364,15 +353,12 @@ const I18N = {
     "papers.citation": "citação",
     "papers.citations": "citações",
     "highlights.label": "Destaques",
-    "highlights.intro": "Projetos que marquei com estrela no GitHub — o que acompanho, uso ou volto a consultar.",
+    "highlights.intro": "Meus repositórios no GitHub, dos mais estrelados para os menos.",
     "highlights.topics": "Tópicos recorrentes",
-    "highlights.loading": "Carregando projetos com estrela…",
-    "highlights.empty": "Nenhum projeto com estrela ainda.",
+    "highlights.loading": "Carregando repositórios…",
+    "highlights.empty": "Nenhum repositório público ainda.",
     "highlights.offline": "A API do GitHub está ocupada agora.",
-    "highlights.starsLink": "Ver a lista de estrelas no GitHub",
-    "repos.label": "Repositórios",
-    "repos.loading": "Carregando repositórios…",
-    "repos.offline": "Lista ao vivo indisponível agora — mostrando os repositórios fixados.",
+    "highlights.reposLink": "Ver todos os repositórios no GitHub",
     "repos.updated": "atualizado em",
     "repos.noDescription": "Sem descrição.",
     "footer.left": "Feito com HTML, CSS e um pouco de física numérica."
@@ -425,7 +411,6 @@ function applyLang(next){
   history.replaceState(null, "", url);
 
   if (state.repos) renderRepos();
-  if (state.stars) renderStars();
   if (state.papers) renderPapers();
 }
 
@@ -436,9 +421,18 @@ document.querySelectorAll(".lang button").forEach(function(b){
 /* language is initialised at the end of this file, once the data layer exists */
 
 /* =======================================================================
-   3. DATA — own repositories, starred projects, publications
+   3. DATA — repositories and publications
    ======================================================================= */
-const state = { repos:null, stars:null, papers:null };
+const state = { repos:null, papers:null };
+
+/* how many repositories the highlights section shows */
+const MAX_HIGHLIGHTS = 6;
+
+/* GitHub topics that count as the electronics thread — these get highlighted */
+const HW_TOPICS = ["arduino","esp32","esp8266","embedded","embedded-systems","firmware","pcb",
+  "kicad","electronics","iot","microcontroller","stm32","avr","fpga","verilog","vhdl","hardware",
+  "raspberry-pi","robotics","plc","automation","signal-processing","dsp","sensors","instrumentation",
+  "power-electronics","circuit","circuits","spice","analog","rtos","can-bus","modbus"];
 
 function statusLine(el, key, href, linkKey){
   el.textContent = key ? I18N[lang][key] + (href ? " " : "") : "";
@@ -451,78 +445,9 @@ function statusLine(el, key, href, linkKey){
   }
 }
 
-/* --- repository cards (used for both own repos and starred projects) --- */
-function renderRepoCards(grid, list, showOwner){
-  grid.innerHTML = "";
-  list.forEach(function(r){
-    const a = document.createElement("a");
-    a.className = "repo";
-    a.href = r.html_url;
-
-    const h = document.createElement("h3");
-    h.textContent = showOwner ? (r.full_name || r.name) : r.name;
-
-    const p = document.createElement("p");
-    p.textContent = r.description || I18N[lang]["repos.noDescription"];
-
-    const meta = document.createElement("div");
-    meta.className = "meta";
-    if (r.language){
-      const s = document.createElement("span");
-      s.innerHTML = '<span class="dot"></span>';
-      s.appendChild(document.createTextNode(r.language));
-      meta.appendChild(s);
-    }
-    const stars = document.createElement("span");
-    stars.textContent = "★ " + (r.stargazers_count || 0);
-    meta.appendChild(stars);
-    if (r.pushed_at){
-      const d = document.createElement("span");
-      d.textContent = I18N[lang]["repos.updated"] + " " +
-        new Date(r.pushed_at).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-GB",
-          { year:"numeric", month:"short" });
-      meta.appendChild(d);
-    }
-
-    a.append(h, p, meta);
-    grid.appendChild(a);
-  });
-}
-
-/* --- own repositories --- */
+/* --- my repositories, most starred first --- */
 const repoGrid = document.getElementById("repo-grid");
 const repoStatus = document.getElementById("repo-status");
-
-function renderRepos(){
-  renderRepoCards(repoGrid, state.repos.list, false);
-  statusLine(repoStatus, state.repos.live ? null : "repos.offline");
-}
-
-statusLine(repoStatus, "repos.loading");
-fetch("https://api.github.com/users/levsan13/repos?sort=pushed&per_page=100")
-  .then(function(r){ if(!r.ok) throw new Error("api"); return r.json(); })
-  .then(function(data){
-    const list = data.filter(function(r){ return !r.fork; })
-                     .sort(function(a,b){ return (b.stargazers_count - a.stargazers_count) ||
-                                                 (new Date(b.pushed_at) - new Date(a.pushed_at)); });
-    state.repos = { list: list.length ? list : FALLBACK_REPOS, live: list.length > 0 };
-    renderRepos();
-  })
-  .catch(function(){
-    state.repos = { list: FALLBACK_REPOS, live: false };
-    renderRepos();
-  });
-
-/* --- starred projects, shown as highlights --- */
-const starGrid = document.getElementById("star-grid");
-const starStatus = document.getElementById("star-status");
-
-/* GitHub topics that count as the electronics thread — these get highlighted */
-const HW_TOPICS = ["arduino","esp32","esp8266","embedded","embedded-systems","firmware","pcb",
-  "kicad","electronics","iot","microcontroller","stm32","avr","fpga","verilog","vhdl","hardware",
-  "raspberry-pi","robotics","plc","automation","signal-processing","dsp","sensors","instrumentation",
-  "power-electronics","circuit","circuits","spice","analog","rtos","can-bus","modbus"];
-
 const topicStrip = document.getElementById("topic-strip");
 const topicsLabel = document.getElementById("topics-label");
 
@@ -546,26 +471,68 @@ function renderTopics(list){
   topicsLabel.hidden = names.length === 0;
 }
 
-function renderStars(){
-  renderRepoCards(starGrid, state.stars.list, true);
-  renderTopics(state.stars.list);
-  const empty = state.stars.list.length === 0;
-  statusLine(starStatus,
-    state.stars.live ? (empty ? "highlights.empty" : null) : "highlights.offline",
-    (state.stars.live && !empty) ? null : "https://github.com/levsan13?tab=stars",
-    "highlights.starsLink");
+function renderRepos(){
+  const list = state.repos.list;
+  repoGrid.innerHTML = "";
+
+  list.forEach(function(r){
+    const a = document.createElement("a");
+    a.className = "repo";
+    a.href = r.html_url;
+
+    const h = document.createElement("h3");
+    h.textContent = r.name;
+
+    const p = document.createElement("p");
+    p.textContent = r.description || I18N[lang]["repos.noDescription"];
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+    if (r.language){
+      const s = document.createElement("span");
+      s.innerHTML = '<span class="dot"></span>';
+      s.appendChild(document.createTextNode(r.language));
+      meta.appendChild(s);
+    }
+    const stars = document.createElement("span");
+    stars.textContent = "\u2605 " + (r.stargazers_count || 0);
+    meta.appendChild(stars);
+    if (r.pushed_at){
+      const d = document.createElement("span");
+      d.textContent = I18N[lang]["repos.updated"] + " " +
+        new Date(r.pushed_at).toLocaleDateString(lang === "pt" ? "pt-BR" : "en-GB",
+          { year:"numeric", month:"short" });
+      meta.appendChild(d);
+    }
+
+    a.append(h, p, meta);
+    repoGrid.appendChild(a);
+  });
+
+  renderTopics(list);
+
+  const empty = list.length === 0;
+  statusLine(repoStatus,
+    state.repos.live ? (empty ? "highlights.empty" : null) : "highlights.offline",
+    (state.repos.live && !empty) ? null : "https://github.com/levsan13?tab=repositories",
+    "highlights.reposLink");
 }
 
-statusLine(starStatus, "highlights.loading");
-fetch("https://api.github.com/users/levsan13/starred?per_page=30")
+statusLine(repoStatus, "highlights.loading");
+fetch("https://api.github.com/users/levsan13/repos?per_page=100")
   .then(function(r){ if(!r.ok) throw new Error("api"); return r.json(); })
   .then(function(data){
-    state.stars = { list: Array.isArray(data) ? data : [], live: true };
-    renderStars();
+    const list = (Array.isArray(data) ? data : [])
+      .filter(function(r){ return !r.fork; })
+      .sort(function(a,b){ return (b.stargazers_count - a.stargazers_count) ||
+                                  (new Date(b.pushed_at) - new Date(a.pushed_at)); })
+      .slice(0, MAX_HIGHLIGHTS);
+    state.repos = { list: list, live: true };
+    renderRepos();
   })
   .catch(function(){
-    state.stars = { list: [], live: false };
-    renderStars();
+    state.repos = { list: FALLBACK_REPOS, live: false };
+    renderRepos();
   });
 
 /* --- publications and citation counts, from OpenAlex via the ORCID --- */
