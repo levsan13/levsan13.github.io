@@ -132,19 +132,29 @@
   .facts a{color:var(--amber);text-decoration:none}
   .facts a:hover{text-decoration:underline}
 
-  /* ---------- research ---------- */
-  .work{display:grid;gap:1px;background:var(--line);border:1px solid var(--line)}
-  .work article{background:var(--void);padding:clamp(22px,3.4vw,34px)}
-  .work h3{
+  /* ---------- publications ---------- */
+  .stats{display:flex;flex-wrap:wrap;gap:clamp(26px,6vw,64px);margin:0 0 34px;padding:0;list-style:none}
+  .stats li{display:flex;flex-direction:column;gap:6px}
+  .stats .n{font-family:var(--display);font-weight:300;font-size:clamp(34px,5vw,50px);line-height:1;color:var(--amber)}
+  .stats .t{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+
+  .papers{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+  .papers li{
+    display:flex;gap:clamp(14px,3vw,36px);align-items:baseline;justify-content:space-between;
+    flex-wrap:wrap;padding:22px 0;border-bottom:1px solid var(--line);
+  }
+  .papers h3{
     font-family:var(--display);font-weight:500;
-    font-size:clamp(21px,2.7vw,27px);line-height:1.2;margin:0 0 12px;
+    font-size:clamp(18px,2.3vw,23px);line-height:1.3;margin:0 0 8px;max-width:56ch;
   }
-  .work p{margin:0;color:#C7CBE2;max-width:62ch}
-  .work .tag{
-    display:inline-block;margin-bottom:14px;
-    font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
-    color:var(--amber);
+  .papers h3 a{text-decoration:none;transition:color .18s}
+  .papers h3 a:hover{color:var(--amber)}
+  .papers .src{font-family:var(--mono);font-size:12.5px;color:var(--muted);letter-spacing:.03em}
+  .papers .cites{
+    font-family:var(--mono);font-size:12px;letter-spacing:.05em;color:var(--violet);
+    white-space:nowrap;border:1px solid var(--line);border-radius:999px;padding:6px 14px;
   }
+  .lede{margin:-6px 0 26px;color:#C7CBE2;max-width:58ch;font-size:clamp(16px,1.7vw,17.5px)}
 
   /* ---------- repos ---------- */
   .repos{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
@@ -231,26 +241,25 @@
   </div>
 </section>
 
-<section class="section" id="work">
+<section class="section" id="papers">
   <div class="section-inner">
-    <p class="label" data-i18n="work.label"></p>
-    <div class="work">
-      <article>
-        <span class="tag" data-i18n="work.t1.tag"></span>
-        <h3 data-i18n="work.t1.title"></h3>
-        <p data-i18n="work.t1.body"></p>
-      </article>
-      <article>
-        <span class="tag" data-i18n="work.t2.tag"></span>
-        <h3 data-i18n="work.t2.title"></h3>
-        <p data-i18n="work.t2.body"></p>
-      </article>
-      <article>
-        <span class="tag" data-i18n="work.t3.tag"></span>
-        <h3 data-i18n="work.t3.title"></h3>
-        <p data-i18n="work.t3.body"></p>
-      </article>
-    </div>
+    <p class="label" data-i18n="papers.label"></p>
+    <ul class="stats" id="paper-stats" hidden>
+      <li><span class="n" id="stat-works">—</span><span class="t" data-i18n="papers.statWorks"></span></li>
+      <li><span class="n" id="stat-cites">—</span><span class="t" data-i18n="papers.statCites"></span></li>
+      <li><span class="n" id="stat-h">—</span><span class="t" data-i18n="papers.statH"></span></li>
+    </ul>
+    <ul class="papers" id="paper-list"></ul>
+    <p class="status" id="paper-status"></p>
+  </div>
+</section>
+
+<section class="section" id="highlights">
+  <div class="section-inner">
+    <p class="label" data-i18n="highlights.label"></p>
+    <p class="lede" data-i18n="highlights.intro"></p>
+    <div class="repos" id="star-grid"></div>
+    <p class="status" id="star-status"></p>
   </div>
 </section>
 
@@ -288,16 +297,22 @@ const I18N = {
     "facts.field": "Field",
     "facts.fieldValue": "Physics · ML",
     "facts.languages": "Languages",
-    "work.label": "What I work on",
-    "work.t1.tag": "Research",
-    "work.t1.title": "Bias in text-to-image models",
-    "work.t1.body": "Measuring demographic bias in image generation and testing taxonomy-guided reprompting as a mitigation strategy — an approach that works on the prompt, leaving model weights untouched.",
-    "work.t2.tag": "Computational physics",
-    "work.t2.title": "Wave packets on curved geometry",
-    "work.t2.body": "My graduation project: a C++ simulation of how a quantum wave packet propagates and disperses when the underlying space is curved. The animation at the top of this page is that idea, drawn live.",
-    "work.t3.tag": "Infrastructure",
-    "work.t3.title": "Local models and self-hosting",
-    "work.t3.body": "Running open-weight language models on my own machines, and a home NAS on TrueNAS/ZFS serving files, backups and media. Everything under my own roof.",
+    "papers.label": "Papers & citations",
+    "papers.statWorks": "Indexed works",
+    "papers.statCites": "Citations",
+    "papers.statH": "h-index",
+    "papers.loading": "Loading publications…",
+    "papers.empty": "Nothing indexed under this ORCID yet. Work appears here automatically once it has a DOI.",
+    "papers.offline": "Couldn't reach OpenAlex. Showing the manually listed entries.",
+    "papers.orcidLink": "See the full ORCID record",
+    "papers.citation": "citation",
+    "papers.citations": "citations",
+    "highlights.label": "Highlights",
+    "highlights.intro": "Projects I've starred on GitHub — the work I follow, use, or keep coming back to.",
+    "highlights.loading": "Loading starred projects…",
+    "highlights.empty": "No starred projects yet.",
+    "highlights.offline": "GitHub's API is busy right now.",
+    "highlights.starsLink": "See the starred list on GitHub",
     "repos.label": "Repositories",
     "repos.loading": "Loading repositories…",
     "repos.offline": "Live list unavailable right now — showing the pinned repositories.",
@@ -319,16 +334,22 @@ const I18N = {
     "facts.field": "Área",
     "facts.fieldValue": "Física · ML",
     "facts.languages": "Idiomas",
-    "work.label": "No que trabalho",
-    "work.t1.tag": "Pesquisa",
-    "work.t1.title": "Viés em modelos texto-para-imagem",
-    "work.t1.body": "Medir viés demográfico na geração de imagens e testar reprompting guiado por taxonomia como estratégia de mitigação — uma abordagem que atua no prompt, sem tocar nos pesos do modelo.",
-    "work.t2.tag": "Física computacional",
-    "work.t2.title": "Pacotes de onda em geometria curva",
-    "work.t2.body": "Meu trabalho de graduação: uma simulação em C++ de como um pacote de onda quântico se propaga e se dispersa quando o espaço subjacente é curvo. A animação no topo desta página é essa ideia, desenhada ao vivo.",
-    "work.t3.tag": "Infraestrutura",
-    "work.t3.title": "Modelos locais e self-hosting",
-    "work.t3.body": "Modelos de linguagem de pesos abertos rodando nas minhas próprias máquinas, e um NAS caseiro em TrueNAS/ZFS servindo arquivos, backups e mídia. Tudo debaixo do meu teto.",
+    "papers.label": "Artigos e citações",
+    "papers.statWorks": "Trabalhos indexados",
+    "papers.statCites": "Citações",
+    "papers.statH": "índice h",
+    "papers.loading": "Carregando publicações…",
+    "papers.empty": "Nada indexado neste ORCID ainda. Os trabalhos aparecem aqui automaticamente assim que tiverem DOI.",
+    "papers.offline": "Não deu para acessar o OpenAlex. Mostrando as entradas listadas manualmente.",
+    "papers.orcidLink": "Ver o registro ORCID completo",
+    "papers.citation": "citação",
+    "papers.citations": "citações",
+    "highlights.label": "Destaques",
+    "highlights.intro": "Projetos que marquei com estrela no GitHub — o que acompanho, uso ou volto a consultar.",
+    "highlights.loading": "Carregando projetos com estrela…",
+    "highlights.empty": "Nenhum projeto com estrela ainda.",
+    "highlights.offline": "A API do GitHub está ocupada agora.",
+    "highlights.starsLink": "Ver a lista de estrelas no GitHub",
     "repos.label": "Repositórios",
     "repos.loading": "Carregando repositórios…",
     "repos.offline": "Lista ao vivo indisponível agora — mostrando os repositórios fixados.",
@@ -340,17 +361,29 @@ const I18N = {
 
 /* Fallback used if the GitHub API is unreachable or rate-limited */
 const FALLBACK_REPOS = [
-  { name:"Wave-Packet-propagation-curvature", html_url:"https://github.com/levsan13/Wave-Packet-propagation-curvature",
+  { name:"Wave-Packet-propagation-curvature", full_name:"levsan13/Wave-Packet-propagation-curvature",
+    html_url:"https://github.com/levsan13/Wave-Packet-propagation-curvature",
     description:"My graduation", language:"C++", stargazers_count:1, pushed_at:null },
-  { name:"IBVB-Campanha", html_url:"https://github.com/levsan13/IBVB-Campanha",
+  { name:"IBVB-Campanha", full_name:"levsan13/IBVB-Campanha",
+    html_url:"https://github.com/levsan13/IBVB-Campanha",
     description:null, language:"HTML", stargazers_count:0, pushed_at:null }
 ];
+
+/* Papers listed by hand — anything here always shows, merged with whatever
+   OpenAlex finds under the ORCID below. Useful for preprints and work in review.
+   Copy the block, fill it in, remove the // in front of each line.
+// const MANUAL_PAPERS = [
+//   { title:"Taxonomy-guided reprompting for demographic bias mitigation in text-to-image models",
+//     venue:"Working paper", year:2026, url:"", cites:null }
+// ];
+*/
+const MANUAL_PAPERS = [];
+const ORCID = "0009-0004-2541-7934";
 
 /* =======================================================================
    2. LANGUAGE SWITCH
    ======================================================================= */
 let lang = "en";
-let repos = null;
 
 function applyLang(next){
   lang = I18N[next] ? next : "en";
@@ -371,24 +404,35 @@ function applyLang(next){
   url.searchParams.set("lang", lang);
   history.replaceState(null, "", url);
 
-  if (repos) renderRepos(repos.list, repos.live);
+  if (state.repos) renderRepos();
+  if (state.stars) renderStars();
+  if (state.papers) renderPapers();
 }
 
 document.querySelectorAll(".lang button").forEach(function(b){
   b.addEventListener("click", function(){ applyLang(b.dataset.lang); });
 });
 
-const urlLang = new URLSearchParams(window.location.search).get("lang");
-const browserLang = (navigator.language || "en").toLowerCase().startsWith("pt") ? "pt" : "en";
-applyLang(urlLang === "pt" || urlLang === "en" ? urlLang : browserLang);
+/* language is initialised at the end of this file, once the data layer exists */
 
 /* =======================================================================
-   3. REPOSITORIES (live from the GitHub API, with fallback)
+   3. DATA — own repositories, starred projects, publications
    ======================================================================= */
-const grid = document.getElementById("repo-grid");
-const status = document.getElementById("repo-status");
+const state = { repos:null, stars:null, papers:null };
 
-function renderRepos(list, live){
+function statusLine(el, key, href, linkKey){
+  el.textContent = key ? I18N[lang][key] + (href ? " " : "") : "";
+  if (href){
+    const a = document.createElement("a");
+    a.href = href;
+    a.textContent = I18N[lang][linkKey];
+    a.style.color = "var(--amber)";
+    el.appendChild(a);
+  }
+}
+
+/* --- repository cards (used for both own repos and starred projects) --- */
+function renderRepoCards(grid, list, showOwner){
   grid.innerHTML = "";
   list.forEach(function(r){
     const a = document.createElement("a");
@@ -396,7 +440,7 @@ function renderRepos(list, live){
     a.href = r.html_url;
 
     const h = document.createElement("h3");
-    h.textContent = r.name;
+    h.textContent = showOwner ? (r.full_name || r.name) : r.name;
 
     const p = document.createElement("p");
     p.textContent = r.description || I18N[lang]["repos.noDescription"];
@@ -423,22 +467,136 @@ function renderRepos(list, live){
     a.append(h, p, meta);
     grid.appendChild(a);
   });
-  status.textContent = live ? "" : I18N[lang]["repos.offline"];
 }
 
-status.textContent = I18N[lang]["repos.loading"];
+/* --- own repositories --- */
+const repoGrid = document.getElementById("repo-grid");
+const repoStatus = document.getElementById("repo-status");
+
+function renderRepos(){
+  renderRepoCards(repoGrid, state.repos.list, false);
+  statusLine(repoStatus, state.repos.live ? null : "repos.offline");
+}
+
+statusLine(repoStatus, "repos.loading");
 fetch("https://api.github.com/users/levsan13/repos?sort=pushed&per_page=100")
   .then(function(r){ if(!r.ok) throw new Error("api"); return r.json(); })
   .then(function(data){
     const list = data.filter(function(r){ return !r.fork; })
                      .sort(function(a,b){ return (b.stargazers_count - a.stargazers_count) ||
                                                  (new Date(b.pushed_at) - new Date(a.pushed_at)); });
-    repos = { list: list.length ? list : FALLBACK_REPOS, live: true };
-    renderRepos(repos.list, true);
+    state.repos = { list: list.length ? list : FALLBACK_REPOS, live: list.length > 0 };
+    renderRepos();
   })
   .catch(function(){
-    repos = { list: FALLBACK_REPOS, live: false };
-    renderRepos(FALLBACK_REPOS, false);
+    state.repos = { list: FALLBACK_REPOS, live: false };
+    renderRepos();
+  });
+
+/* --- starred projects, shown as highlights --- */
+const starGrid = document.getElementById("star-grid");
+const starStatus = document.getElementById("star-status");
+
+function renderStars(){
+  renderRepoCards(starGrid, state.stars.list, true);
+  const empty = state.stars.list.length === 0;
+  statusLine(starStatus,
+    state.stars.live ? (empty ? "highlights.empty" : null) : "highlights.offline",
+    (state.stars.live && !empty) ? null : "https://github.com/levsan13?tab=stars",
+    "highlights.starsLink");
+}
+
+statusLine(starStatus, "highlights.loading");
+fetch("https://api.github.com/users/levsan13/starred?per_page=30")
+  .then(function(r){ if(!r.ok) throw new Error("api"); return r.json(); })
+  .then(function(data){
+    state.stars = { list: Array.isArray(data) ? data : [], live: true };
+    renderStars();
+  })
+  .catch(function(){
+    state.stars = { list: [], live: false };
+    renderStars();
+  });
+
+/* --- publications and citation counts, from OpenAlex via the ORCID --- */
+const paperList = document.getElementById("paper-list");
+const paperStats = document.getElementById("paper-stats");
+const paperStatus = document.getElementById("paper-status");
+
+function hIndex(counts){
+  const sorted = counts.slice().sort(function(a,b){ return b - a; });
+  let h = 0;
+  while (h < sorted.length && sorted[h] >= h + 1) h++;
+  return h;
+}
+
+function renderPapers(){
+  const list = state.papers.list;
+  paperList.innerHTML = "";
+
+  const counted = list.filter(function(p){ return typeof p.cites === "number"; })
+                      .map(function(p){ return p.cites; });
+  const total = counted.reduce(function(a,b){ return a + b; }, 0);
+
+  paperStats.hidden = list.length === 0;
+  document.getElementById("stat-works").textContent = list.length;
+  document.getElementById("stat-cites").textContent = total;
+  document.getElementById("stat-h").textContent = hIndex(counted);
+
+  list.forEach(function(p){
+    const li = document.createElement("li");
+
+    const box = document.createElement("div");
+    const h = document.createElement("h3");
+    if (p.url){
+      const a = document.createElement("a");
+      a.href = p.url; a.textContent = p.title;
+      h.appendChild(a);
+    } else {
+      h.textContent = p.title;
+    }
+    const src = document.createElement("div");
+    src.className = "src";
+    src.textContent = [p.venue, p.year].filter(Boolean).join(" · ");
+    box.append(h, src);
+    li.appendChild(box);
+
+    if (typeof p.cites === "number"){
+      const c = document.createElement("span");
+      c.className = "cites";
+      c.textContent = p.cites + " " + I18N[lang][p.cites === 1 ? "papers.citation" : "papers.citations"];
+      li.appendChild(c);
+    }
+    paperList.appendChild(li);
+  });
+
+  if (!list.length){
+    statusLine(paperStatus, "papers.empty", "https://orcid.org/" + ORCID, "papers.orcidLink");
+  } else {
+    statusLine(paperStatus, state.papers.live ? null : "papers.offline");
+  }
+}
+
+statusLine(paperStatus, "papers.loading");
+fetch("https://api.openalex.org/works?filter=author.orcid:" + ORCID +
+      "&sort=publication_year:desc&per_page=25")
+  .then(function(r){ if(!r.ok) throw new Error("api"); return r.json(); })
+  .then(function(data){
+    const found = (data.results || []).map(function(w){
+      return {
+        title: w.display_name,
+        venue: (w.primary_location && w.primary_location.source && w.primary_location.source.display_name) || w.type,
+        year: w.publication_year,
+        url: w.doi || (w.primary_location && w.primary_location.landing_page_url) || null,
+        cites: w.cited_by_count
+      };
+    });
+    state.papers = { list: MANUAL_PAPERS.concat(found), live: true };
+    renderPapers();
+  })
+  .catch(function(){
+    state.papers = { list: MANUAL_PAPERS, live: false };
+    renderPapers();
   });
 
 /* =======================================================================
@@ -547,6 +705,13 @@ fetch("https://api.github.com/users/levsan13/repos?sort=pushed&per_page=100")
   resize();
   if (!reduced) requestAnimationFrame(frame);
 })();
+
+/* =======================================================================
+   5. START — pick the language and paint every label
+   ======================================================================= */
+const urlLang = new URLSearchParams(window.location.search).get("lang");
+const browserLang = (navigator.language || "en").toLowerCase().startsWith("pt") ? "pt" : "en";
+applyLang(urlLang === "pt" || urlLang === "en" ? urlLang : browserLang);
 </script>
 </body>
 </html>
