@@ -309,8 +309,8 @@ const I18N = {
     "papers.statCites": "Citations",
     "papers.statH": "h-index",
     "papers.loading": "Loading publications…",
-    "papers.empty": "Nothing indexed under this ORCID yet. Work appears here automatically once it has a DOI.",
-    "papers.offline": "Couldn't reach OpenAlex. Showing the manually listed entries.",
+    "papers.empty": "Nothing public on this ORCID record yet. Works appear here automatically once added to ORCID.",
+    "papers.offline": "Couldn't reach ORCID. Showing the manually listed entries.",
     "papers.orcidLink": "See the full ORCID record",
     "papers.citation": "citation",
     "papers.citations": "citations",
@@ -347,8 +347,8 @@ const I18N = {
     "papers.statCites": "Citações",
     "papers.statH": "índice h",
     "papers.loading": "Carregando publicações…",
-    "papers.empty": "Nada indexado neste ORCID ainda. Os trabalhos aparecem aqui automaticamente assim que tiverem DOI.",
-    "papers.offline": "Não deu para acessar o OpenAlex. Mostrando as entradas listadas manualmente.",
+    "papers.empty": "Nada público neste registro ORCID ainda. Os trabalhos aparecem aqui automaticamente assim que forem adicionados ao ORCID.",
+    "papers.offline": "Não deu para acessar o ORCID. Mostrando as entradas listadas manualmente.",
     "papers.orcidLink": "Ver o registro ORCID completo",
     "papers.citation": "citação",
     "papers.citations": "citações",
@@ -376,7 +376,7 @@ const FALLBACK_REPOS = [
 ];
 
 /* Papers listed by hand — anything here always shows, merged with whatever
-   OpenAlex finds under the ORCID below. Useful for preprints and work in review.
+   the ORCID record below lists. Useful for preprints and work in review.
    Copy the block, fill it in, remove the // in front of each line.
 // const MANUAL_PAPERS = [
 //   { title:"Taxonomy-guided reprompting for demographic bias mitigation in text-to-image models",
@@ -535,7 +535,7 @@ fetch("https://api.github.com/users/levsan13/repos?per_page=100")
     renderRepos();
   });
 
-/* --- publications and citation counts, from OpenAlex via the ORCID --- */
+/* --- publications from the ORCID record, citation counts from OpenAlex --- */
 const paperList = document.getElementById("paper-list");
 const paperStats = document.getElementById("paper-stats");
 const paperStatus = document.getElementById("paper-status");
@@ -594,20 +594,56 @@ function renderPapers(){
   }
 }
 
+/* The ORCID record is the source of truth: OpenAlex can take weeks to link a
+   work to an ORCID (and often never does for Zenodo software/datasets), so
+   works are read straight from the ORCID public API. OpenAlex is only asked
+   for citation counts, by DOI; if it fails the list still shows. */
+function orcidWork(group){
+  const w = group["work-summary"][0];
+  const ids = (w["external-ids"] && w["external-ids"]["external-id"]) || [];
+  const doiId = ids.filter(function(i){ return i["external-id-type"] === "doi"; })[0];
+  const doi = doiId
+    ? ((doiId["external-id-normalized"] && doiId["external-id-normalized"].value) || doiId["external-id-value"]).toLowerCase()
+    : null;
+  const type = (w.type || "").replace(/-/g, " ");
+  return {
+    title: w.title && w.title.title ? w.title.title.value : "",
+    venue: (w["journal-title"] && w["journal-title"].value) || (type && type.charAt(0).toUpperCase() + type.slice(1)),
+    year: w["publication-date"] && w["publication-date"].year ? Number(w["publication-date"].year.value) : null,
+    url: doi ? "https://doi.org/" + doi : (w.url && w.url.value) || null,
+    doi: doi,
+    cites: null
+  };
+}
+
+function addCitations(list){
+  const dois = list.filter(function(p){ return p.doi; }).map(function(p){ return p.doi; });
+  if (!dois.length) return Promise.resolve(list);
+  return fetch("https://api.openalex.org/works?filter=doi:" + dois.join("|") +
+               "&per_page=50&select=doi,cited_by_count")
+    .then(function(r){ if(!r.ok) throw new Error("api"); return r.json(); })
+    .then(function(data){
+      const byDoi = {};
+      (data.results || []).forEach(function(w){
+        if (w.doi) byDoi[w.doi.replace("https://doi.org/", "").toLowerCase()] = w.cited_by_count;
+      });
+      list.forEach(function(p){ if (p.doi && typeof byDoi[p.doi] === "number") p.cites = byDoi[p.doi]; });
+      return list;
+    })
+    .catch(function(){ return list; });
+}
+
 statusLine(paperStatus, "papers.loading");
-fetch("https://api.openalex.org/works?filter=author.orcid:" + ORCID +
-      "&sort=publication_year:desc&per_page=25")
+fetch("https://pub.orcid.org/v3.0/" + ORCID + "/works", { headers: { "Accept": "application/json" } })
   .then(function(r){ if(!r.ok) throw new Error("api"); return r.json(); })
   .then(function(data){
-    const found = (data.results || []).map(function(w){
-      return {
-        title: w.display_name,
-        venue: (w.primary_location && w.primary_location.source && w.primary_location.source.display_name) || w.type,
-        year: w.publication_year,
-        url: w.doi || (w.primary_location && w.primary_location.landing_page_url) || null,
-        cites: w.cited_by_count
-      };
-    });
+    const found = (data.group || [])
+      .filter(function(g){ return g["work-summary"] && g["work-summary"].length; })
+      .map(orcidWork)
+      .sort(function(a,b){ return (b.year || 0) - (a.year || 0); });
+    return addCitations(found);
+  })
+  .then(function(found){
     state.papers = { list: MANUAL_PAPERS.concat(found), live: true };
     renderPapers();
   })
