@@ -140,9 +140,30 @@
 
   .papers{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
   .papers li{
-    display:flex;gap:clamp(14px,3vw,36px);align-items:baseline;justify-content:space-between;
-    flex-wrap:wrap;padding:22px 0;border-bottom:1px solid var(--line);
+    display:grid;grid-template-columns:136px minmax(0,1fr) auto;
+    gap:clamp(14px,2.6vw,30px);align-items:center;
+    padding:22px 0;border-bottom:1px solid var(--line);
   }
+  .papers .fig{
+    display:flex;align-items:center;justify-content:center;
+    width:136px;aspect-ratio:4/3;overflow:hidden;
+    background:var(--surface);border:1px solid var(--line);border-radius:4px;
+    transition:border-color .18s;
+  }
+  a.fig:hover{border-color:var(--amber)}
+  .papers .fig img{width:100%;height:100%;object-fit:cover;display:block;background:#fff}
+  .papers .fig .ph{font-family:var(--display);font-style:italic;font-weight:300;font-size:38px;color:var(--violet);opacity:.7}
+  .papers .side{display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+  .papers .actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+  .papers .actions button,.papers .actions a{
+    appearance:none;cursor:pointer;text-decoration:none;white-space:nowrap;
+    font-family:var(--mono);font-size:11.5px;letter-spacing:.04em;line-height:1.4;
+    color:var(--muted);background:rgba(20,25,53,.55);
+    border:1px solid var(--line);border-radius:999px;padding:6px 12px;
+    transition:border-color .18s,color .18s;
+  }
+  .papers .actions button:hover,.papers .actions a:hover{color:var(--text);border-color:var(--amber)}
+  .papers .actions .done{color:var(--amber);border-color:rgba(242,180,65,.42)}
   .papers h3{
     font-family:var(--display);font-weight:500;
     font-size:clamp(18px,2.3vw,23px);line-height:1.3;margin:0 0 8px;max-width:56ch;
@@ -190,6 +211,10 @@
   @media (max-width:760px){
     .cols{grid-template-columns:1fr}
     .tagline{max-width:none}
+    .papers li{grid-template-columns:96px minmax(0,1fr)}
+    .papers .fig{width:96px}
+    .papers .side{grid-column:1 / -1;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between}
+    .papers .actions{justify-content:flex-start}
   }
   @media (prefers-reduced-motion:reduce){
     html{scroll-behavior:auto}
@@ -314,6 +339,13 @@ const I18N = {
     "papers.orcidLink": "See the full ORCID record",
     "papers.citation": "citation",
     "papers.citations": "citations",
+    "papers.cite": "Cite",
+    "papers.share": "Share",
+    "papers.open": "Open page",
+    "papers.copied": "Citation copied",
+    "papers.linkCopied": "Link copied",
+    "papers.copyPrompt": "Copy:",
+    "papers.figure": "Main figure",
     "highlights.label": "Highlights",
     "highlights.intro": "My repositories on GitHub, most starred first.",
     "highlights.topics": "Recurring topics",
@@ -352,6 +384,13 @@ const I18N = {
     "papers.orcidLink": "Ver o registro ORCID completo",
     "papers.citation": "citação",
     "papers.citations": "citações",
+    "papers.cite": "Citar",
+    "papers.share": "Compartilhar",
+    "papers.open": "Acessar página",
+    "papers.copied": "Citação copiada",
+    "papers.linkCopied": "Link copiado",
+    "papers.copyPrompt": "Copie:",
+    "papers.figure": "Figura principal",
     "highlights.label": "Destaques",
     "highlights.intro": "Meus repositórios no GitHub, dos mais estrelados para os menos.",
     "highlights.topics": "Tópicos recorrentes",
@@ -380,10 +419,21 @@ const FALLBACK_REPOS = [
    Copy the block, fill it in, remove the // in front of each line.
 // const MANUAL_PAPERS = [
 //   { title:"Taxonomy-guided reprompting for demographic bias mitigation in text-to-image models",
-//     venue:"Working paper", year:2026, url:"", cites:null }
+//     venue:"Working paper", year:2026, url:"", cites:null,
+//     figure:{ src:"https://…/figure.png", alt:"What the figure shows" } }
 // ];
 */
 const MANUAL_PAPERS = [];
+
+/* Main figure shown next to each paper, keyed by DOI (lowercase).
+   Papers without an entry use the first image of their Zenodo record, if any,
+   and otherwise a placeholder. */
+const PAPER_FIGURES = {
+  "10.5281/zenodo.23779294": {
+    src:"https://raw.githubusercontent.com/levsan13/LLMatter2D/main/paper/figures/archimedean_bands.png",
+    alt:"Nearest-neighbour tight-binding bands of the 11 Archimedean lattices"
+  }
+};
 const ORCID = "0009-0004-2541-7934";
 
 /* =======================================================================
@@ -562,6 +612,7 @@ function renderPapers(){
 
   list.forEach(function(p){
     const li = document.createElement("li");
+    li.appendChild(paperFigure(p));
 
     const box = document.createElement("div");
     const h = document.createElement("h3");
@@ -578,12 +629,16 @@ function renderPapers(){
     box.append(h, src);
     li.appendChild(box);
 
+    const side = document.createElement("div");
+    side.className = "side";
     if (typeof p.cites === "number"){
       const c = document.createElement("span");
       c.className = "cites";
       c.textContent = p.cites + " " + I18N[lang][p.cites === 1 ? "papers.citation" : "papers.citations"];
-      li.appendChild(c);
+      side.appendChild(c);
     }
+    side.appendChild(paperActions(p));
+    li.appendChild(side);
     paperList.appendChild(li);
   });
 
@@ -612,7 +667,8 @@ function orcidWork(group){
     year: w["publication-date"] && w["publication-date"].year ? Number(w["publication-date"].year.value) : null,
     url: doi ? "https://doi.org/" + doi : (w.url && w.url.value) || null,
     doi: doi,
-    cites: null
+    cites: null,
+    figure: (doi && PAPER_FIGURES[doi]) || null
   };
 }
 
@@ -633,6 +689,109 @@ function addCitations(list){
     .catch(function(){ return list; });
 }
 
+/* --- per-paper figure and buttons --- */
+function placeholderFigure(){
+  const ph = document.createElement("div");
+  ph.className = "fig";
+  ph.setAttribute("aria-hidden", "true");
+  ph.innerHTML = '<span class="ph">ψ</span>';
+  return ph;
+}
+
+function paperFigure(p){
+  if (!p.figure) return placeholderFigure();
+  const a = document.createElement("a");
+  a.className = "fig";
+  a.href = p.figure.src; a.target = "_blank"; a.rel = "noopener";
+  a.title = I18N[lang]["papers.figure"];
+  const img = document.createElement("img");
+  img.src = p.figure.src;
+  img.alt = p.figure.alt || p.title;
+  img.loading = "lazy";
+  img.addEventListener("error", function(){ a.replaceWith(placeholderFigure()); });
+  a.appendChild(img);
+  return a;
+}
+
+function flash(btn, key){
+  btn.textContent = I18N[lang][key];
+  btn.classList.add("done");
+  setTimeout(function(){
+    btn.textContent = I18N[lang][btn.dataset.key];
+    btn.classList.remove("done");
+  }, 2000);
+}
+
+function copyText(text){
+  if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+  window.prompt(I18N[lang]["papers.copyPrompt"], text);
+  return Promise.resolve();
+}
+
+/* APA reference from doi.org content negotiation, or a plain one from ORCID data */
+function citation(p){
+  if (p.citation) return Promise.resolve(p.citation);
+  const plain = [p.title, p.venue, p.year, p.url].filter(Boolean).join(". ");
+  if (!p.doi) return Promise.resolve(plain);
+  return fetch("https://doi.org/" + p.doi, { headers: { "Accept": "text/x-bibliography; style=apa" } })
+    .then(function(r){ if(!r.ok) throw new Error("doi"); return r.text(); })
+    .then(function(html){
+      const text = new DOMParser().parseFromString(html, "text/html").body.textContent.trim();
+      return (p.citation = text || plain);
+    })
+    .catch(function(){ return plain; });
+}
+
+function actionButton(key, onClick){
+  const b = document.createElement("button");
+  b.type = "button";
+  b.dataset.key = key;
+  b.textContent = I18N[lang][key];
+  b.addEventListener("click", function(){ onClick(b); });
+  return b;
+}
+
+function paperActions(p){
+  const box = document.createElement("div");
+  box.className = "actions";
+  const link = p.url || ("https://orcid.org/" + ORCID);
+
+  box.appendChild(actionButton("papers.cite", function(b){
+    citation(p).then(copyText).then(function(){ flash(b, "papers.copied"); });
+  }));
+  box.appendChild(actionButton("papers.share", function(b){
+    if (navigator.share){
+      navigator.share({ title: p.title, url: link }).catch(function(){});
+    } else {
+      copyText(link).then(function(){ flash(b, "papers.linkCopied"); });
+    }
+  }));
+  if (p.url){
+    const a = document.createElement("a");
+    a.href = p.url; a.target = "_blank"; a.rel = "noopener";
+    a.textContent = I18N[lang]["papers.open"];
+    box.appendChild(a);
+  }
+  return box;
+}
+
+/* Zenodo records often carry a figure among their files */
+function addZenodoFigures(list){
+  list.forEach(function(p){
+    const m = !p.figure && p.doi && p.doi.match(/^10\.5281\/zenodo\.(\d+)$/);
+    if (!m) return;
+    fetch("https://zenodo.org/api/records/" + m[1])
+      .then(function(r){ if(!r.ok) throw new Error("zenodo"); return r.json(); })
+      .then(function(rec){
+        const img = (rec.files || []).filter(function(f){ return /\.(png|jpe?g|gif|webp|svg)$/i.test(f.key); })[0];
+        if (!img) return;
+        p.figure = { src: img.links.self, alt: p.title };
+        renderPapers();
+      })
+      .catch(function(){});
+  });
+}
+
 statusLine(paperStatus, "papers.loading");
 fetch("https://pub.orcid.org/v3.0/" + ORCID + "/works", { headers: { "Accept": "application/json" } })
   .then(function(r){ if(!r.ok) throw new Error("api"); return r.json(); })
@@ -646,6 +805,7 @@ fetch("https://pub.orcid.org/v3.0/" + ORCID + "/works", { headers: { "Accept": "
   .then(function(found){
     state.papers = { list: MANUAL_PAPERS.concat(found), live: true };
     renderPapers();
+    addZenodoFigures(state.papers.list);
   })
   .catch(function(){
     state.papers = { list: MANUAL_PAPERS, live: false };
